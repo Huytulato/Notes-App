@@ -1,0 +1,105 @@
+/* src/index.css */
+
+/* Định nghĩa biến màu cho Light Theme (mặc định) */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  --background-color: #ffffff;
+  --text-color: #213547;
+  --note-bg-color: #f9f9f9;
+  --border-color: #ccc;
+  --button-bg-color: #f0f0f0;
+  --button-hover-bg-color: #e0e0e0;
+}
+
+/* Ghi đè các biến màu cho Dark Theme */
+[data-theme='dark'] {
+  --background-color: #242424;
+  --text-color: rgba(255, 255, 255, 0.87);
+  --note-bg-color: #333333;
+  --border-color: #555555;
+  --button-bg-color: #444444;
+  --button-hover-bg-color: #555555;
+}
+
+/* Áp dụng các biến vào các element */
+body {
+  margin: 0;
+  padding: 2rem;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+h1, h2, h3 {
+  color: var(--text-color);
+}
+
+input, textarea {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  background-color: var(--note-bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px 15px;
+  margin-right: 10px;
+  border: 1px solid var(--border-color);
+  background-color: var(--button-bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: var(--button-hover-bg-color);
+}
+
+/* Style cho các card ghi chú */
+.note-card {
+  background-color: var(--note-bg-color);
+  border: 1px solid var(--border-color);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+}
+
+.note-card-content {
+  /* Style cho nội dung markdown được render */
+  background-color: transparent;
+  margin-top: 15px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 15px;
+
+  /* THÊM DÒNG NÀY VÀO */
+  white-space: pre-wrap; /* Bảo toàn các ký tự xuống dòng và khoảng trắng */
+}
+
+.note-card-content p,
+.note-card-content h1,
+.note-card-content h2,
+.note-card-content h3,
+.note-card-content li {
+    color: var(--text-color);
+}
+
+.note-card-content p,
+.note-card-content ul,
+.note-card-content ol {
+  margin-top: 0;
+  margin-bottom: 1em; /* Thêm khoảng cách dưới cho mỗi đoạn/danh sách */
+}
+
+.note-card-content p:last-child,
+.note-card-content ul:last-child,
+.note-card-content ol:last-child {
+  margin-bottom: 0; /* Bỏ khoảng cách cho phần tử cuối cùng */
+}
