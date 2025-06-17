@@ -2,18 +2,26 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Note } from './schemas/note.schema';
-import { CreateNoteDto } from './dto/create-note.dto';
-import { UpdateNoteDto } from './dto/update-note.dto';
 import * as marked from 'marked';
 
+// Tạo các interface để định nghĩa hình dạng của input
+interface NoteInput {
+  title: string;
+  content: string;
+}
+
+interface UpdateNoteInput {
+  title?: string;
+  content?: string;
+}
 @Injectable()
 export class NotesService {
   constructor(@InjectModel(Note.name) private noteModel: Model<Note>) {}
 
-  async create(createNoteDto: CreateNoteDto, userId: string): Promise<Note> {
-    const contentHtml = marked.parse(createNoteDto.content);
+  async create(noteInput: NoteInput, userId: string): Promise<Note> {
+    const contentHtml = marked.parse(noteInput.content);
     const newNote = new this.noteModel({
-      ...createNoteDto,
+      ...noteInput,
       contentHtml,
       author: userId,
     });
@@ -48,18 +56,17 @@ export class NotesService {
     return note;
   }
 
-  async update(id: string, updateNoteDto: UpdateNoteDto, userId: string): Promise<Note> {
-    const noteToUpdate = { ...updateNoteDto };
+  async update(id: string, updateNoteInput: UpdateNoteInput, userId: string): Promise<Note> {
+    const noteToUpdate: any = { ...updateNoteInput };
 
-    // Nếu có nội dung mới, chuyển đổi nó sang HTML
-    if (updateNoteDto.content) {
-      noteToUpdate['contentHtml'] = marked.parse(updateNoteDto.content);
+    if (updateNoteInput.content) {
+      noteToUpdate.contentHtml = marked.parse(updateNoteInput.content);
     }
 
     const updatedNote = await this.noteModel.findOneAndUpdate(
-      { _id: id, author: userId }, // Đảm bảo chỉ user sở hữu mới có thể update
+      { _id: id, author: userId },
       noteToUpdate,
-      { new: true }, // Trả về document đã được update
+      { new: true },
     ).exec();
 
     if (!updatedNote) {

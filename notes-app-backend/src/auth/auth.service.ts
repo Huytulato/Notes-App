@@ -2,8 +2,13 @@ import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/co
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { RegisterInput } from './dto/register.input';
+import { LoginInput } from './dto/login.input';
+import { User } from '../users/schemas/user.schema';
+import { AuthType } from './types/auth.type';
+
+// Tạo một kiểu mới để bao gồm cả _id
+type ValidatedUser = Omit<User, 'password'> & { _id: any };
 
 @Injectable()
 export class AuthService {
@@ -12,34 +17,37 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto) {
-    const existingUser = await this.usersService.findByEmail(registerDto.email);
+  async register(registerInput: RegisterInput) {
+    const existingUser = await this.usersService.findByEmail(registerInput.email);
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
-    const user = await this.usersService.create(registerDto);
-    // Không trả về password
-    const { password, ...result } = user.toObject();
-    return result;
+    return this.usersService.create(registerInput);
   }
 
-  async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.usersService.findByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user.toObject();
-      return result;
-    }
-    return null;
-  }
+  async login(loginInput: LoginInput): Promise<AuthType> {
+    const user = await this.usersService.findByEmail(loginInput.email);
 
-  async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const payload = { email: user.email, sub: user._id };
+
+    const isPasswordMatching = await bcrypt.compare(loginInput.password, user.password);
+
+    if (!isPasswordMatching) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    
+    const payload = { email: user.email, sub: user._id.toString() };
+    const token = this.jwtService.sign(payload);
+
+    // Trả về đối tượng khớp với AuthType
     return {
-      access_token: this.jwtService.sign(payload),
+      user: {
+        ...(user as any).toObject?.() ?? { ...user },
+        _id: user._id.toString(),
+      },
+      access_token: token,
     };
   }
 }

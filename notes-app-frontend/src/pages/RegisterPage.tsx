@@ -1,26 +1,37 @@
 import React, { useState } from 'react';
+import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import apiClient from '../api/axiosConfig';
+import { useMutation } from '@apollo/client';
+import { REGISTER_MUTATION } from '../graphql/mutations';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [register, { loading, error }] = useMutation(REGISTER_MUTATION, {
+    onCompleted: () => {
+      // Sau khi đăng ký thành công, chuyển hướng đến trang đăng nhập
+      alert('Registration successful! Please log in.');
+      navigate('/login');
+    },
+    onError: (err) => {
+      console.error("Registration error:", err);
+    }
+  });
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+      // Tạm thời giữ lại validation đơn giản ở client
+      alert('Password must be at least 6 characters long.');
       return;
     }
-    try {
-      await apiClient.post('/auth/register', { email, password });
-      navigate('/login'); // Chuyển hướng đến trang đăng nhập sau khi đăng ký thành công
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
-    }
+    register({
+      variables: {
+        registerInput: { email, password },
+      },
+    });
   };
 
   return (
@@ -29,14 +40,16 @@ const RegisterPage = () => {
       <form onSubmit={handleSubmit}>
         <div>
           <label>Email:</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading} />
         </div>
         <div>
           <label>Password:</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={loading} />
         </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit">Register</button>
+        {error && <p style={{ color: 'red' }}>{error.message}</p>}
+        <button type="submit" disabled={loading}>
+          {loading ? 'Registering...' : 'Register'}
+        </button>
       </form>
       <p>
         Already have an account? <Link to="/login">Login here</Link>

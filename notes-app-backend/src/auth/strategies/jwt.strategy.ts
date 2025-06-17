@@ -1,28 +1,30 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'; // Thêm UnauthorizedException
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private usersService: UsersService,
+  ) {
+    
     const secret = configService.get<string>('JWT_SECRET');
     if (!secret) {
-      // Ném lỗi ngay lập tức nếu không tìm thấy secret key
-      // Điều này giúp ứng dụng không khởi động với một cấu hình bảo mật yếu.
-      throw new Error('JWT_SECRET is not defined in the environment variables');
+      throw new Error('JWT_SECRET is not defined in environment variables');
     }
 
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: secret, // Bây giờ 'secret' chắc chắn là một string
+      secretOrKey: secret, 
     });
   }
 
-  // Payload sau khi được giải mã từ token
-  async validate(payload: any) {
-    // NestJS sẽ tự động gán giá trị trả về này vào req.user
-    return { userId: payload.sub, email: payload.email };
+  async validate(payload: { sub: string; email: string }) {
+    const user = await this.usersService.findById(payload.sub);
+    return user;
   }
 }

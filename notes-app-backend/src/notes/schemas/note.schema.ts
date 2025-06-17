@@ -3,7 +3,7 @@ import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../../users/schemas/user.schema';
 
 @Schema({ timestamps: true }) // Tự động thêm createdAt và updatedAt
-export class Note extends Document {
+export class Note {
   @Prop({ required: true, trim: true })
   title: string;
 
